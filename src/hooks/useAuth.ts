@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
 
-const CLIENT_ID = import.meta.env.VITE_YOUTUBE_CLIENT_ID;
-const REDIRECT_URI = window.location.origin;
-const SCOPES = [
+const CLIENT_ID: string | undefined = import.meta.env.VITE_YOUTUBE_CLIENT_ID;
+const REDIRECT_URI: string = window.location.origin;
+const SCOPES: string = [
   'https://www.googleapis.com/auth/youtube.readonly',
   'https://www.googleapis.com/auth/youtube.force-ssl',
   'https://www.googleapis.com/auth/userinfo.email',
   'https://www.googleapis.com/auth/userinfo.profile',
 ].join(' ');
 
-const AUTH_URL = `https://accounts.google.com/o/oauth2/auth?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=${encodeURIComponent(
+const AUTH_URL: string = `https://accounts.google.com/o/oauth2/auth?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=${encodeURIComponent(
   SCOPES
 )}&response_type=token&prompt=consent`;
 
@@ -26,7 +26,7 @@ export interface UseAuthResult {
   accessToken: string | null;
   userInfo: UserInfo | null;
   handleLogin: () => void;
-  handleLogout: (navigate: (path: string) => void) => void;
+  handleLogout: () => void;
 }
 
 const useAuth = (): UseAuthResult => {
@@ -34,16 +34,20 @@ const useAuth = (): UseAuthResult => {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
 
   useEffect(() => {
-    const hash = window.location.hash;
+    const hash: string = window.location.hash;
     if (hash) {
-      const token = new URLSearchParams(hash.substring(1)).get('access_token');
+      const token: string | null = new URLSearchParams(hash.substring(1)).get(
+        'access_token'
+      );
       if (token) {
         setAccessToken(token);
         localStorage.setItem('youtube_access_token', token);
         window.location.hash = '';
       }
     } else {
-      const storedToken = localStorage.getItem('youtube_access_token');
+      const storedToken: string | null = localStorage.getItem(
+        'youtube_access_token'
+      );
       if (storedToken) {
         setAccessToken(storedToken);
       }
@@ -51,13 +55,14 @@ const useAuth = (): UseAuthResult => {
   }, []);
 
   useEffect(() => {
-    const cachedUserInfo = localStorage.getItem('youtube_user_info');
+    const cachedUserInfo: string | null =
+      localStorage.getItem('youtube_user_info');
     if (cachedUserInfo) {
       setUserInfo(JSON.parse(cachedUserInfo));
     } else if (accessToken) {
-      const fetchUserInfo = async () => {
+      const fetchUserInfo = async (): Promise<void> => {
         try {
-          const response = await fetch(
+          const response: Response = await fetch(
             'https://www.googleapis.com/oauth2/v1/userinfo?alt=json',
             {
               headers: {
@@ -66,7 +71,7 @@ const useAuth = (): UseAuthResult => {
             }
           );
           if (response.ok) {
-            const data = await response.json();
+            const data: UserInfo = await response.json();
             setUserInfo(data);
             localStorage.setItem('youtube_user_info', JSON.stringify(data));
           } else {
@@ -87,12 +92,13 @@ const useAuth = (): UseAuthResult => {
     window.location.href = AUTH_URL;
   };
 
-  const handleLogout = (navigate: (path: string) => void): void => {
+  const handleLogout = (): void => {
     localStorage.removeItem('youtube_access_token');
     localStorage.removeItem('youtube_user_info');
     setAccessToken(null);
     setUserInfo(null);
-    navigate('/');
+    //todo: do zastanowienia sie jak to poprawic aby bylo nawigownaia na strone glowna
+    // navigate('/');
   };
 
   return { accessToken, userInfo, handleLogin, handleLogout };
