@@ -1,20 +1,20 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import useChannelLists from '../hooks/useChannelLists.tsx';
-import { globalSubscriptions } from '../hooks/useSubscriptions.ts';
+import useChannelLists, { Channel } from '../hooks/useChannelLists';
+import { globalSubscriptions } from '../hooks/useSubscriptions';
 
-const ListView = () => {
-  const { listName } = useParams();
+const ListView = (): React.ReactNode => {
+  const { listName } = useParams<{ listName: string }>();
   const navigate = useNavigate();
 
   const { lists, toggleChannelInList } = useChannelLists();
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
-  const handleSave = () => {
+  const handleSave = (): void => {
     setIsModalOpen(false);
   };
 
-  const selectedChannels = lists[listName] || [];
+  const selectedChannels: Channel[] = lists[listName || ''] || [];
 
   return (
     <div>
@@ -63,7 +63,7 @@ const ListView = () => {
               Save
             </button>
             <h2>Manage Channels</h2>
-            {globalSubscriptions?.map((sub) => (
+            {globalSubscriptions?.map((sub: Channel) => (
               <div
                 key={sub.id}
                 style={{
@@ -74,7 +74,7 @@ const ListView = () => {
               >
                 <input
                   type="checkbox"
-                  onChange={() => toggleChannelInList(listName, sub)}
+                  onChange={() => toggleChannelInList(listName || '', sub)}
                   checked={selectedChannels.some((c) => c.id === sub.id)}
                   style={{ marginRight: '10px' }}
                 />
@@ -97,7 +97,7 @@ const ListView = () => {
 
       <div className="selected-channels">
         <h2>Selected Channels</h2>
-        {selectedChannels.map((channel) => (
+        {selectedChannels.map((channel: Channel) => (
           <div
             key={channel.id}
             className="subscription"
