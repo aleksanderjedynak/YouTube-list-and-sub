@@ -1,13 +1,18 @@
+import React from 'react';
 import { useState } from 'react';
-import { useAuthContext } from '../contexts/AuthContext.tsx';
+import { useAuthContext } from '../contexts/AuthContext';
 
-const UserInfoModal = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const { userInfo } = useAuthContext();
+interface UserInfo {
+  [key: string]: string | number | boolean | null;
+}
+
+const UserInfoModal = (): React.ReactNode => {
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const { userInfo } = useAuthContext() as { userInfo: UserInfo | null };
 
   if (!userInfo) return null;
 
-  const handleClose = () => setIsOpen(false);
+  const handleClose = (): void => setIsOpen(false);
 
   return (
     <>
@@ -22,7 +27,10 @@ const UserInfoModal = () => {
             <ul className="user-info-list">
               {Object.entries(userInfo).map(([key, value]) => (
                 <li key={key}>
-                  <strong>{key}:</strong> {value}
+                  <strong>{key}:</strong>{' '}
+                  {value !== null && value !== undefined
+                    ? value.toString()
+                    : 'N/A'}
                 </li>
               ))}
             </ul>
