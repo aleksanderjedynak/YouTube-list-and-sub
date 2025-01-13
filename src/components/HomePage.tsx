@@ -36,6 +36,8 @@ const HomePage: React.FC = () => {
     }
   };
 
+  const env = import.meta.env.NODE_ENV;
+
   return (
     <div className="home-page">
       <header className="home-header">
@@ -121,6 +123,10 @@ const HomePage: React.FC = () => {
                   <strong style={{ color: 'darkgrey' }}>
                     {window.location.origin}
                   </strong>
+                </p>
+                <p>
+                  Environment:{' '}
+                  <strong style={{ color: 'darkgrey' }}>{env}</strong>
                 </p>
                 <Footer />
               </>
