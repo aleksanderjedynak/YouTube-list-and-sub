@@ -1,7 +1,12 @@
 import { useState, useEffect } from 'react';
 
 const CLIENT_ID: string | undefined = import.meta.env.VITE_YOUTUBE_CLIENT_ID;
-const REDIRECT_URI: string = window.location.origin;
+
+const REDIRECT_URI =
+  import.meta.env.NODE_ENV === 'production'
+    ? import.meta.env.VITE_REDIRECT_URI
+    : window.location.origin;
+
 const SCOPES: string = [
   'https://www.googleapis.com/auth/youtube.readonly',
   'https://www.googleapis.com/auth/youtube.force-ssl',
@@ -9,9 +14,9 @@ const SCOPES: string = [
   'https://www.googleapis.com/auth/userinfo.profile',
 ].join(' ');
 
-const AUTH_URL: string = `https://accounts.google.com/o/oauth2/auth?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=${encodeURIComponent(
-  SCOPES
-)}&response_type=token&prompt=consent`;
+const AUTH_URL: string = `https://accounts.google.com/o/oauth2/auth?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(
+  REDIRECT_URI
+)}&scope=${encodeURIComponent(SCOPES)}&response_type=token&prompt=consent`;
 
 interface UserInfo {
   name: string;
@@ -89,6 +94,7 @@ const useAuth = (): UseAuthResult => {
   }, [accessToken]);
 
   const handleLogin = (): void => {
+    console.log('Redirecting to AUTH_URL:', AUTH_URL);
     window.location.href = AUTH_URL;
   };
 
@@ -97,8 +103,8 @@ const useAuth = (): UseAuthResult => {
     localStorage.removeItem('youtube_user_info');
     setAccessToken(null);
     setUserInfo(null);
-    //todo: do zastanowienia sie jak to poprawic aby bylo nawigownaia na strone glowna
-    // navigate('/');
+    // Przekierowanie na stronę główną
+    window.location.href = REDIRECT_URI;
   };
 
   return { accessToken, userInfo, handleLogin, handleLogout };
