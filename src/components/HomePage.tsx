@@ -112,16 +112,18 @@ const HomePage: React.FC = () => {
                       {globalSubscriptionCount}{' '}
                     </strong>
                   </p>
-                  <p>
-                    Aktualny host:{' '}
-                    <strong style={{ color: 'darkgrey' }}>
-                      {window.location.origin}
-                    </strong>
-                  </p>
                 </div>
               </>
             ) : (
-              <Footer />
+              <>
+                <p>
+                  Aktualny host:{' '}
+                  <strong style={{ color: 'darkgrey' }}>
+                    {window.location.origin}
+                  </strong>
+                </p>
+                <Footer />
+              </>
             )}
           </div>
         </div>
