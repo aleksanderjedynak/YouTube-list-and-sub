@@ -1,27 +1,77 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import useSubscriptions from '../hooks/useSubscriptions';
-import useAuth from '../hooks/useAuth.ts';
+import useAuth from '../hooks/useAuth';
 import { Link } from 'react-router-dom';
 
-const Subscriptions = () => {
+interface Thumbnail {
+  high: {
+    url: string;
+  };
+}
+
+interface Snippet {
+  title: string;
+  description?: string;
+  publishedAt: string;
+  thumbnails: Thumbnail;
+  resourceId: {
+    channelId: string;
+  };
+}
+
+interface Statistics {
+  subscriberCount?: string;
+  videoCount?: string;
+  viewCount?: string;
+}
+
+interface BrandingSettings {
+  image?: {
+    bannerExternalUrl?: string;
+  };
+}
+
+interface Subscription {
+  id: string;
+  snippet: Snippet;
+  statistics?: Statistics;
+  brandingSettings?: BrandingSettings;
+}
+
+interface ChannelDetails {
+  brandingSettings: BrandingSettings;
+  statistics: Required<Statistics>;
+  snippet: Required<Snippet>;
+}
+
+interface TypeSubscription {
+  id: string;
+  name: string;
+  details: ChannelDetails | null;
+}
+
+const Subscriptions: React.FC = () => {
   const { accessToken } = useAuth();
   const { subscriptions, fetchSubscriptions, getSubscriptionCount } =
     useSubscriptions(accessToken);
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortCriteria, setSortCriteria] = useState('default');
-  const [selectedChannel, setSelectedChannel] = useState(null);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [sortCriteria, setSortCriteria] = useState<string>('default');
+  const [selectedChannel, setSelectedChannel] =
+    useState<TypeSubscription | null>(null);
 
-  const handleRefresh = async () => {
+  const handleRefresh = async (): Promise<void> => {
     await fetchSubscriptions();
     console.log('Lista subskrypcji została odświeżona.');
   };
 
-  const handleSearch = (event) => {
+  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>): void => {
     setSearchQuery(event.target.value.toLowerCase());
   };
 
-  const handleSortChange = (event) => {
+  const handleSortChange = (
+    event: React.ChangeEvent<HTMLSelectElement>
+  ): void => {
     setSortCriteria(event.target.value);
   };
 
@@ -29,27 +79,27 @@ const Subscriptions = () => {
     if (sortCriteria === 'name') {
       return a.snippet.title.localeCompare(b.snippet.title);
     } else if (sortCriteria === 'date') {
-      return new Date(a.snippet.publishedAt) - new Date(b.snippet.publishedAt);
+      return (
+        new Date(a.snippet.publishedAt).getTime() -
+        new Date(b.snippet.publishedAt).getTime()
+      );
     } else if (sortCriteria === 'subscribers') {
       const aSubscribers = parseInt(a.statistics?.subscriberCount || '0', 10);
       const bSubscribers = parseInt(b.statistics?.subscriberCount || '0', 10);
-      console.log('Sorting by subscribers:', { aSubscribers, bSubscribers });
       return bSubscribers - aSubscribers;
     } else if (sortCriteria === 'videos') {
       const aVideos = parseInt(a.statistics?.videoCount || '0', 10);
       const bVideos = parseInt(b.statistics?.videoCount || '0', 10);
-      console.log('Sorting by videos:', { aVideos, bVideos });
       return bVideos - aVideos;
     }
     return 0;
   });
 
-  const filteredSubscriptions = sortedSubscriptions.filter((sub) => {
-    console.log('Filtering:', { title: sub.snippet.title, query: searchQuery });
-    return sub.snippet.title.toLowerCase().includes(searchQuery);
-  });
+  const filteredSubscriptions = sortedSubscriptions.filter((sub) =>
+    sub.snippet.title.toLowerCase().includes(searchQuery)
+  );
 
-  const handleUnsubscribe = async (subscriptionId) => {
+  const handleUnsubscribe = async (subscriptionId: string): Promise<void> => {
     try {
       await fetch(
         `https://www.googleapis.com/youtube/v3/subscriptions?id=${subscriptionId}`,
@@ -67,7 +117,9 @@ const Subscriptions = () => {
     }
   };
 
-  const fetchChannelDetails = async (channelId) => {
+  const fetchChannelDetails = async (
+    channelId: string
+  ): Promise<ChannelDetails | null> => {
     try {
       const response = await fetch(
         `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics,brandingSettings&id=${channelId}`,
@@ -79,7 +131,7 @@ const Subscriptions = () => {
       );
       const data = await response.json();
       if (data.items && data.items.length > 0) {
-        return data.items[0]; // Zwraca dane kanału
+        return data.items[0];
       }
     } catch (error) {
       console.error('Nie udało się pobrać szczegółów kanału:', error);
@@ -87,20 +139,24 @@ const Subscriptions = () => {
     return null;
   };
 
-  const handleShowModal = async (channel) => {
+  const handleShowModal = async (channel: Subscription): Promise<void> => {
     const channelDetails = await fetchChannelDetails(
       channel.snippet.resourceId.channelId
     );
-    console.log('Fetched channel details:', channelDetails);
-    setSelectedChannel({ ...channel, details: channelDetails });
+    if (channelDetails) {
+      setSelectedChannel({
+        id: channel.id,
+        name: channel.snippet.title,
+        details: channelDetails,
+      });
+    } else {
+      console.error('Channel details are null');
+    }
   };
 
-  const handleCloseModal = () => {
+  const handleCloseModal = (): void => {
     setSelectedChannel(null);
   };
-
-  //todo: poprawic style i wyglad
-  //fixme: podzielic na mniejsze kawalki
 
   return (
     <div>
@@ -175,7 +231,7 @@ const Subscriptions = () => {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(10, 1fr)',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
           gap: '16px',
           marginTop: '20px',
         }}
@@ -276,10 +332,7 @@ const Subscriptions = () => {
               selectedChannel.details.snippet.publishedAt
             ).toLocaleDateString()}
           </p>
-          <p>
-            <strong>Baner kanału:</strong>
-          </p>
-          {selectedChannel.details.brandingSettings?.image
+          {selectedChannel.details.brandingSettings.image
             ?.bannerExternalUrl && (
             <img
               src={
