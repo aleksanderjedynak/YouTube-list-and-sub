@@ -1,8 +1,17 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 
+export type Channel = {
+  id: string;
+  [key: string]: any;
+};
+
+type Lists = {
+  [key: string]: Channel[];
+};
+
 const useChannelLists = () => {
-  const [lists, setLists] = useState(() => {
+  const [lists, setLists] = useState<Lists>(() => {
     const savedLists = localStorage.getItem('lists');
     return savedLists ? JSON.parse(savedLists) : {};
   });
@@ -16,7 +25,7 @@ const useChannelLists = () => {
   }, [lists]);
 
   useEffect(() => {
-    const handleStorageChange = (event) => {
+    const handleStorageChange = (event: StorageEvent) => {
       if (event.key === 'lists') {
         const updatedLists = localStorage.getItem('lists');
         setLists(updatedLists ? JSON.parse(updatedLists) : {});
@@ -30,7 +39,7 @@ const useChannelLists = () => {
     };
   }, []);
 
-  const createList = (listName) => {
+  const createList = (listName: string): void => {
     if (!listName || listName.length < 3) {
       toast.error('List name must be at least 3 characters long.');
       return;
@@ -45,7 +54,7 @@ const useChannelLists = () => {
     });
   };
 
-  const deleteList = (listName) => {
+  const deleteList = (listName: string): void => {
     setLists((prevLists) => {
       const updatedLists = { ...prevLists };
       delete updatedLists[listName];
@@ -54,7 +63,7 @@ const useChannelLists = () => {
     });
   };
 
-  const toggleChannelInList = (listName, channel) => {
+  const toggleChannelInList = (listName: string, channel: Channel): void => {
     setLists((prevLists) => {
       const list = prevLists[listName] || [];
       const updatedList = list.some((c) => c.id === channel.id)
@@ -64,13 +73,13 @@ const useChannelLists = () => {
     });
   };
 
-  const getListCount = () => Object.keys(lists).length;
+  const getListCount = (): number => Object.keys(lists).length;
 
-  const getChannelCountInList = (listName) => {
+  const getChannelCountInList = (listName: string): number => {
     return lists[listName]?.length || 0;
   };
 
-  const refreshLists = () => {
+  const refreshLists = (): void => {
     const updatedLists = localStorage.getItem('lists');
     setLists(updatedLists ? JSON.parse(updatedLists) : {});
   };
