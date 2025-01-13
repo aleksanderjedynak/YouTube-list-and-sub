@@ -11,10 +11,14 @@ interface Subscription {
       default: {
         url: string;
       };
+      high: {
+        url: string;
+      };
     };
     resourceId: {
       channelId: string;
     };
+    publishedAt: string;
   };
   statistics?: {
     subscriberCount: string;
@@ -29,15 +33,15 @@ interface UseSubscriptionsResult {
   getSubscriptionCount: () => number | null;
 }
 
-let globalSubscriptionCount: number | null = null; // Globalna zmienna na liczbę subskrypcji
-let globalSubscriptions: Subscription[] | null = null; // Globalna zmienna na listę subskrypcji
+let globalSubscriptionCount: number | null = null; // Global variable for subscription count
+let globalSubscriptions: Subscription[] | null = null; // Global variable for subscription list
 
 const useSubscriptions = (
   accessToken: string | null
 ): UseSubscriptionsResult => {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
 
-  // Funkcja do pobierania szczegółów kanału
+  // Function to fetch channel details
   const fetchChannelDetails = useCallback(
     async (channelId: string): Promise<Subscription | null> => {
       if (!accessToken) return null;
@@ -70,7 +74,7 @@ const useSubscriptions = (
     [accessToken]
   );
 
-  // Funkcja do pobierania subskrypcji z API
+  // Function to fetch subscriptions from API
   const fetchSubscriptions = useCallback(async () => {
     if (!accessToken) return;
 
@@ -109,26 +113,26 @@ const useSubscriptions = (
       } while (nextPageToken);
 
       setSubscriptions(allSubscriptions);
-      globalSubscriptions = allSubscriptions; // Aktualizacja globalnej listy subskrypcji
-      globalSubscriptionCount = allSubscriptions.length; // Aktualizacja globalnej liczby subskrypcji
+      globalSubscriptions = allSubscriptions; // Update global subscription list
+      globalSubscriptionCount = allSubscriptions.length; // Update global subscription count
     } catch (err) {
       console.error('Failed to fetch subscriptions:', err);
       globalSubscriptions = null;
-      globalSubscriptionCount = null; // Jeśli wystąpi błąd, ustaw null
+      globalSubscriptionCount = null; // Set to null on error
     }
   }, [accessToken, fetchChannelDetails]);
 
-  // Pobieranie subskrypcji przy pierwszym renderze lub zmianie accessToken
+  // Fetch subscriptions on initial render or when accessToken changes
   useEffect(() => {
     fetchSubscriptions();
   }, [fetchSubscriptions]);
 
-  // Funkcja do zwracania subskrypcji jako JSON
+  // Function to return subscriptions as JSON
   const getSubscriptionsAsJson = (): string => {
     return JSON.stringify(subscriptions, null, 2);
   };
 
-  // Funkcja do zwracania liczby subskrypcji
+  // Function to return subscription count
   const getSubscriptionCount = (): number | null => {
     return globalSubscriptionCount;
   };
